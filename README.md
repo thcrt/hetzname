@@ -86,5 +86,3 @@ curl -s --location \
     --header 'Auth-API-Token: '${apitoken} | \
     jq --raw-output '.records[] | select(.type == "'${record_type}'") | select(.name == "'{record_name}'") | .id'
 ```
-}'
-```
