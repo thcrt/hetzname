@@ -1,7 +1,5 @@
 # Hetzname
- <p align=center">
-   <a href="https://en.wikipedia.org/wiki/Dynamic_DNS">DDNS</a> for Hetzner's DNS Console <a href="https://dns.hetzner.com/api-docs/">API</a>.
- </p>
+**_[DDNS](https://en.wikipedia.org/wiki/Dynamic_DNS) for Hetzner's DNS Console, using the [official API](https://dns.hetzner.com/api-docs) and minimal dependencies._**
  
 This is a fork of [FarrowStrange](https://github.com/FarrowStrange)'s [`hetzner-api-dyndns`](https://github.com/FarrowStrange/hetzner-api-dyndns). 
 Features from Hetzname will be submitted upstream, and any new features upstream will naturally be merged here in due time.
