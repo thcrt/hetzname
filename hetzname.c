@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
     }
 
     api_token = getenv("HETZNAME_API_TOKEN");
-    if (!api_token[0])
+    if (!api_token)
         error("No API token provided! Set the environment variable "
               "HETZNAME_API_TOKEN and try again.");
 
