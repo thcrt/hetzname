@@ -4,6 +4,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+#define HETZNAME_VERSION "0.0.1"
+#define HETZNAME_USER_AGENT                                                                        \
+    "Hetzname DDNS bot / v" HETZNAME_VERSION " (https://github.com/thcrt/hetzname)"
+#define HETZNAME_API_BASE "https://dns.hetzner.com/api/v1/"
+
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,13 +18,6 @@
 #include <curl/curl.h>
 
 CURL *curl;
-
-void error(char message[]) {
-    fprintf(stderr, "Hetzname: ERROR: %s\n", message);
-    curl_easy_cleanup(curl);
-    curl_global_cleanup();
-    exit(1);
-}
 
 void help() {
     printf(
@@ -94,13 +92,15 @@ struct APIResponse {
     size_t size;
 };
 
-static size_t APICallback(void *chunk, size_t size, size_t chunk_size,
-                          struct APIResponse *response) {
+static size_t API_Callback(void *chunk, size_t size, size_t chunk_size,
+                           struct APIResponse *response) {
     size_t real_size = size * chunk_size;
 
     response->data = realloc(response->data, response->size + real_size + 1);
-    if (!response->data)
-        error("Out of memory while fetching API response!");
+    if (!response->data) {
+        fprintf(stderr, "Out of memory while fetching API response!\n");
+        return 0;
+    }
 
     memcpy(&(response->data[response->size]), chunk, real_size);
     response->size += real_size;
@@ -109,56 +109,71 @@ static size_t APICallback(void *chunk, size_t size, size_t chunk_size,
     return real_size;
 }
 
-const char *get_zone_id(char target_name[], char api_token[]) {
-    curl_easy_setopt(curl, CURLOPT_URL, "https://dns.hetzner.com/api/v1/zones");
+int query_API(char api_token[], char uri[], cJSON **result) {
 
-    // Construct and add API token header
+    // Construct full URL
+    char url[32] = HETZNAME_API_BASE;
+    strcat(url, uri);
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+
+    // Construct header for API token
     struct curl_slist *headers = NULL;
     char *auth_header;
     asprintf(&auth_header, "Auth-API-Token: %s", api_token);
     headers = curl_slist_append(headers, auth_header);
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    
+
+    // Add user agent
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, HETZNAME_USER_AGENT);
     // Prepare a response object and add the callback function
     struct APIResponse response;
     response.data = malloc(1);
     response.size = 0;
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, APICallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, API_Callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
-    
-    // Perform the request
-    CURLcode res;
-    res = curl_easy_perform(curl);
-    if (res != CURLE_OK) {
-        char *message;
-        asprintf(&message, "API request failed: %s", curl_easy_strerror(res));
-        free(response.data);
-        curl_slist_free_all(headers);
-        error(message);
-    }
 
-    // parse JSON and find relevant zone by name
-    cJSON *data = cJSON_Parse(response.data);
-    cJSON *zones = cJSON_GetObjectItemCaseSensitive(data, "zones");
-    cJSON *zone;
-    static char zone_id[22];
-    cJSON_ArrayForEach(zone, zones) {
-        char* name = cJSON_GetObjectItemCaseSensitive(zone, "name")->valuestring;
-        if (strcmp(name, target_name) == 0) {
-            strcpy(zone_id, cJSON_GetObjectItemCaseSensitive(zone, "id")->valuestring);
-        }
+    // Perform the request
+    CURLcode response_code = curl_easy_perform(curl);
+    if (response_code != CURLE_OK) {
+        fprintf(stderr, "API query to %s unsuccessful (response code %s)!\n", uri,
+                curl_easy_strerror(response_code));
+        return 0;
     }
+    *result = cJSON_Parse(response.data);
 
     free(response.data);
     curl_slist_free_all(headers);
+    return 1;
+}
 
-    if (!zone_id[0]) {
-        char *message;
-        asprintf(&message, "Can't find zone with name: %s", target_name);
-        error(message);
+int get_zone_id(char target_name[], char api_token[], char *result) {
+    // Load API response into a buffer, checking for failure
+    cJSON *data;
+    if (!query_API(api_token, "zones", &data))
+        return 0;
+    
+    // Get the top-level zones list
+    cJSON *zones = cJSON_GetObjectItemCaseSensitive(data, "zones");
+
+    // Search each zone and check its name
+    cJSON *current_zone;
+    int success = 0;
+    cJSON_ArrayForEach(current_zone, zones) {
+        char *current_name =
+            cJSON_GetObjectItemCaseSensitive(current_zone, "name")->valuestring;
+        if (strcmp(current_name, target_name) == 0) {
+            // If it matches, copy it into the provided result buffer
+            strcpy(result, cJSON_GetObjectItemCaseSensitive(current_zone, "id")->valuestring);
+            success = 1;
+        }
     }
 
-    return zone_id;
+    if (!success) 
+        fprintf(stderr, "No zone found with name %s!\n", target_name);
+
+    cJSON_Delete(current_zone);
+    cJSON_Delete(data);
+    return success;
 }
 
 const char *get_record_id(char zone_name[]) { return "boing"; }
@@ -189,9 +204,6 @@ int main(int argc, char *argv[]) {
                 strcpy(record_id, optarg);
                 break;
             case 'z':
-                if (zone_id[0]) { // zone id was also passed
-                    error("Must specify zone ID or zone name, not both!");
-                }
                 strcpy(zone_name, optarg);
                 break;
             case 'r':
@@ -201,13 +213,7 @@ int main(int argc, char *argv[]) {
                 ttl = atoi(optarg);
                 break;
             case 'T':
-                if (strcmp(optarg, "A") == 0 || strcmp(optarg, "AAAA") == 0) {
-                    strcpy(record_type, optarg);
-                } else {
-                    char *message;
-                    asprintf(&message, "Record type must be 'A' or 'AAAA', not '%s'!", record_type);
-                    error(message);
-                }
+                strcpy(record_type, optarg);
                 break;
             case 'h':
                 help();
@@ -217,19 +223,33 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    char *api_token = getenv("HETZNAME_API_TOKEN");
-    if (!api_token)
-        error("No API token provided! Set the environment variable "
-              "HETZNAME_API_TOKEN and try again.");
+    if (zone_id[0] && zone_name[0]) { 
+        fprintf(stderr, "Must specify zone ID or zone name, not both!\n");
+        exit(EXIT_FAILURE);
+    }
 
-    curl_global_init(CURL_GLOBAL_ALL);
+    if (strcmp(record_type, "A") && strcmp(record_type, "AAAA")) {
+        fprintf(stderr, "Record type must be 'A' or 'AAAA', not '%s'!\n", record_type);
+        exit(EXIT_FAILURE);
+    }
+
+    char *api_token = getenv("HETZNAME_API_TOKEN");
+    if (!api_token) {
+        fprintf(stderr, "HETZNAME_API_TOKEN must be set!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    CURLcode curl_global_init_status = curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
-    if (!curl)
-        error("Error initialising cURL!");
+    if (!curl || curl_global_init_status) {
+        fprintf(stderr, "Error initialising cURL!\n");
+        exit(EXIT_FAILURE);
+    }
 
     // fetch missing IDs/names from the API if needed
     if (!zone_id[0])
-        strcpy(zone_id, get_zone_id(zone_name, api_token));
+        if (!get_zone_id(zone_name, api_token, zone_id))
+            return EXIT_FAILURE;
     else if (!zone_name[0])
         strcpy(zone_name, get_zone_name(zone_id));
     if (record_name[0] && !record_id[0])
@@ -247,5 +267,5 @@ int main(int argc, char *argv[]) {
 
     curl_easy_cleanup(curl);
     curl_global_cleanup();
-    return 0;
+    return EXIT_SUCCESS;
 }
