@@ -4,8 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
 
@@ -82,28 +82,16 @@ void help() {
     );
 }
 
-const char* get_zone_id(char zone_name[]) {
-    return "wibble";
-}
+const char *get_zone_id(char zone_name[]) {
+const char *get_record_id(char zone_name[]) { return "boing"; }
 
-const char* get_record_id(char zone_name[]) {
-    return "boing";
-}
+const char *get_zone_name(char zone_name[]) { return "click"; }
 
-const char* get_zone_name(char zone_name[]) {
-    return "click";
-}
+const char *get_record_name(char zone_name[]) { return "p'tang"; }
 
-const char* get_record_name(char zone_name[]) {
-    return "p'tang";
-}
-
-int main(int argc, char* argv[]) {
-    char zone_name[256] = "",
-         record_name[256] = "",
-         zone_id[256] = "",
-         record_id[256] = "",
-         record_type[5] = "A";
+int main(int argc, char *argv[]) {
+    char zone_name[256] = "", record_name[256] = "", zone_id[256] = "", record_id[256] = "";
+    char record_type[5] = "A";
     int ttl = -1;
 
     // show help if no arguments are given
@@ -152,13 +140,19 @@ int main(int argc, char* argv[]) {
     }
 
     api_token = getenv("HETZNAME_API_TOKEN");
-    if (!api_token[0]) error("No API token provided! Set the environment variable HETZNAME_API_TOKEN and try again.");
+    if (!api_token[0])
+        error("No API token provided! Set the environment variable "
+              "HETZNAME_API_TOKEN and try again.");
 
     // fetch missing IDs/names from the API if needed
-    if (!zone_id[0])                            strcpy(zone_id, get_zone_id(zone_name));
-    else if (!zone_name[0])                     strcpy(zone_name, get_zone_name(zone_id));
-    if (record_name[0] && !record_id[0])        strcpy(record_id, get_record_id(record_name));
-    else if (record_id[0] && !record_name[0])   strcpy(record_name, get_record_name(record_id));
+    if (!zone_id[0])
+        strcpy(zone_id, get_zone_id(zone_name));
+    else if (!zone_name[0])
+        strcpy(zone_name, get_zone_name(zone_id));
+    if (record_name[0] && !record_id[0])
+        strcpy(record_id, get_record_id(record_name));
+    else if (record_id[0] && !record_name[0])
+        strcpy(record_name, get_record_name(record_id));
 
     printf("Zone name:      '%s'\n", zone_name);
     printf("Zone ID:        '%s'\n", zone_id);
