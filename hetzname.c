@@ -4,13 +4,13 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-#include <getopt.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include <getopt.h>
 
 void error(char message[]) {
-    fprintf(stderr, "hetzname: error: %s\n", message);
+    fprintf(stderr, "Hetzname: ERROR: %s\n", message);
     exit(1);
 }
 
@@ -78,8 +78,8 @@ void help() {
         "    Copyright (c) 2023 Theo Court and other contributors. Licensed under the Mozilla   \n"
         "    License 2.0: <https://www.mozilla.org/en-US/MPL/2.0/>. There is NO WARRANTY, to the\n"
         "    extent permitted by law.                                                           \n"
-        "                                                                                       "
-        "\n");
+        "                                                                                       \n"
+    );
 }
 
 const char* get_zone_id(char zone_name[]) {
@@ -105,10 +105,16 @@ int main(int argc, char* argv[]) {
          record_id[256] = "",
          record_type[5] = "A";
     int ttl = -1;
+
+    // show help if no arguments are given
+    if (argc == 1) {
+        help();
+        exit(1);
+    }
     
     // Put all passed arguments into the correct variables
     int c;
-    while ((c = getopt(argc, argv, ":Z:R:z:r:t:T:h")) != -1) {
+    while ((c = getopt(argc, argv, "Z:R:z:r:t:T:h")) != -1) {
         switch (c) {
             case 'Z':
                 strcpy(zone_id, optarg);
@@ -133,7 +139,7 @@ int main(int argc, char* argv[]) {
                     strcpy(record_type, optarg);
                 } else {
                     char *message;
-                    asprintf(&message, "record type must be 'A' or 'AAAA', not '%s'!", record_type);
+                    asprintf(&message, "Record type must be 'A' or 'AAAA', not '%s'!", record_type);
                     error(message);
                 }
                 break;
@@ -141,11 +147,12 @@ int main(int argc, char* argv[]) {
                 help();
                 exit(0);
             default:
-                char *message;
-                asprintf(&message, "unrecognised option '-%s'. use '-h' for help.", c);
-                error(message);
+                exit(1);
         }
     }
+
+    api_token = getenv("HETZNAME_API_TOKEN");
+    if (!api_token[0]) error("No API token provided! Set the environment variable HETZNAME_API_TOKEN and try again.");
 
     // fetch missing IDs/names from the API if needed
     if (!zone_id[0])                            strcpy(zone_id, get_zone_id(zone_name));
@@ -159,5 +166,6 @@ int main(int argc, char* argv[]) {
     printf("Record ID:      '%s'\n", record_id);
     printf("Record type:    '%s'\n", record_type);
     printf("Record TTL:     '%d'\n", ttl);
+    printf("API token:      '%s'\n", api_token);
     return 0;
 }
