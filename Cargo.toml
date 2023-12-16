@@ -1,0 +1,8 @@
+[package]
+    name = "hetzname"
+    version = "0.1.0"
+    edition = "2021"
+
+[dependencies]
+    # we use the git version of argh because some features aren't available as of 2023-12-16 
+    argh = { git = "https://github.com/google/argh.git", rev="6149a1a" }

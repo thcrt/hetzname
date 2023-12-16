@@ -1,2 +1,4 @@
-a.out
-dyndns.sh
+src/dyndns.sh
+src/hetzname.c
+/target
+Cargo.lock
