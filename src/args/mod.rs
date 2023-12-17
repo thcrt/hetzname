@@ -7,7 +7,6 @@ use argh::FromArgs;
 mod record;
 mod zone;
 
-
 /// a command-line client for the Hetzner DNS API
 #[derive(FromArgs)]
 #[argh(help_triggers("-h", "--help"))]
@@ -17,12 +16,12 @@ pub struct Args {
     pub version: bool,
 
     #[argh(subcommand)]
-    action: Option<Actions>,
+    pub action: Option<Action>,
 }
 
 #[derive(FromArgs)]
 #[argh(subcommand)]
-enum Actions {
+enum Action {
     Zone(zone::Args),
     Record(record::Args),
 }

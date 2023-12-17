@@ -4,14 +4,12 @@
 
 use argh::FromArgs;
 
-
-
 /// interact with zones
 #[derive(FromArgs)]
 #[argh(subcommand, name = "zone")]
 pub struct Args {
     #[argh(subcommand)]
-    action: Action,
+    pub action: Action,
 }
 
 #[derive(FromArgs)]
@@ -24,16 +22,13 @@ enum Action {
     Delete(Delete),
     Import(Import),
     Export(Export),
-    Validate(Validate)
+    Validate(Validate),
 }
-
-
 
 /// list all zones in the account
 #[derive(FromArgs)]
 #[argh(subcommand, name = "list")]
 struct List {}
-
 
 /// get information about a zone
 #[derive(FromArgs)]
@@ -41,9 +36,8 @@ struct List {}
 struct Get {
     /// the ID of the zone to get
     #[argh(positional)]
-    id: String,
+    pub id: String,
 }
-
 
 /// create a new zone
 #[derive(FromArgs)]
@@ -51,13 +45,12 @@ struct Get {
 struct Create {
     /// set the name
     #[argh(positional)]
-    name: String,
+    pub name: String,
 
     /// set the Time-To-Live
     #[argh(option, short = 'T')]
-    ttl: Option<usize>,
+    pub ttl: Option<usize>,
 }
-
 
 /// update a zone
 #[derive(FromArgs)]
@@ -65,17 +58,16 @@ struct Create {
 struct Update {
     /// the ID of the zone to update
     #[argh(positional)]
-    id: String,
+    pub id: String,
 
     /// set the name
     #[argh(option, short = 'n')]
-    name: Option<String>,
+    pub name: Option<String>,
 
     /// set the Time-To-Live
     #[argh(option, short = 'T')]
-    ttl: Option<usize>,
+    pub ttl: Option<usize>,
 }
-
 
 /// delete a zone
 #[derive(FromArgs)]
@@ -83,13 +75,12 @@ struct Update {
 struct Delete {
     /// the ID of the zone to delete
     #[argh(positional)]
-    id: String,
+    pub id: String,
 
     /// don't prompt for confirmation
     #[argh(option)]
-    yes_really_delete: bool,
+    pub yes_really_delete: bool,
 }
-
 
 /// import a zone file into a zone
 #[derive(FromArgs)]
@@ -97,13 +88,12 @@ struct Delete {
 struct Import {
     /// the ID of the zone to import into
     #[argh(positional)]
-    id: String,
+    pub id: String,
 
     /// the zone file to import
     #[argh(positional)]
-    file: String,
+    pub file: String,
 }
-
 
 /// export a zone's configuration as a zone file
 #[derive(FromArgs)]
@@ -111,13 +101,12 @@ struct Import {
 struct Export {
     /// the ID of the zone to export
     #[argh(positional)]
-    id: String,
+    pub id: String,
 
     /// the path at which to create the exported zone file
     #[argh(positional)]
-    file: String,
+    pub file: String,
 }
-
 
 /// validate a zone file for a zone without importing it
 #[derive(FromArgs)]
@@ -125,9 +114,9 @@ struct Export {
 struct Validate {
     /// the ID of the zone to validate for
     #[argh(positional)]
-    id: String,
+    pub id: String,
 
     /// the zone file to validate
     #[argh(positional)]
-    file: String,
+    pub file: String,
 }
