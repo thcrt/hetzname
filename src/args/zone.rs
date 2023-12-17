@@ -4,8 +4,6 @@
 
 use argh::FromArgs;
 
-
-
 /// interact with zones
 #[derive(FromArgs)]
 #[argh(subcommand, name = "zone")]
@@ -24,16 +22,13 @@ enum Action {
     Delete(Delete),
     Import(Import),
     Export(Export),
-    Validate(Validate)
+    Validate(Validate),
 }
-
-
 
 /// list all zones in the account
 #[derive(FromArgs)]
 #[argh(subcommand, name = "list")]
 struct List {}
-
 
 /// get information about a zone
 #[derive(FromArgs)]
@@ -43,7 +38,6 @@ struct Get {
     #[argh(positional)]
     id: String,
 }
-
 
 /// create a new zone
 #[derive(FromArgs)]
@@ -57,7 +51,6 @@ struct Create {
     #[argh(option, short = 'T')]
     ttl: Option<usize>,
 }
-
 
 /// update a zone
 #[derive(FromArgs)]
@@ -76,7 +69,6 @@ struct Update {
     ttl: Option<usize>,
 }
 
-
 /// delete a zone
 #[derive(FromArgs)]
 #[argh(subcommand, name = "delete")]
@@ -89,7 +81,6 @@ struct Delete {
     #[argh(option)]
     yes_really_delete: bool,
 }
-
 
 /// import a zone file into a zone
 #[derive(FromArgs)]
@@ -104,7 +95,6 @@ struct Import {
     file: String,
 }
 
-
 /// export a zone's configuration as a zone file
 #[derive(FromArgs)]
 #[argh(subcommand, name = "export")]
@@ -117,7 +107,6 @@ struct Export {
     #[argh(positional)]
     file: String,
 }
-
 
 /// validate a zone file for a zone without importing it
 #[derive(FromArgs)]

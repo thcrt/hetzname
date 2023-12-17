@@ -6,8 +6,6 @@ mod args;
 
 const VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 
-
-
 fn main() {
     let args: args::Args = argh::from_env();
 

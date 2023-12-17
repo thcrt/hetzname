@@ -5,26 +5,33 @@
 use argh::FromArgs;
 use std::str::FromStr;
 
-enum RecordType { A, AAAA, CAA, CNAME, MX, NS, SRV, TXT }
+enum RecordType {
+    A,
+    AAAA,
+    CAA,
+    CNAME,
+    MX,
+    NS,
+    SRV,
+    TXT,
+}
 impl FromStr for RecordType {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "A"|"a" => Ok(RecordType::A),
-            "AAAA"|"aaaa" => Ok(RecordType::AAAA),
-            "CAA"|"caa" => Ok(RecordType::CAA),
-            "CNAME"|"cname" => Ok(RecordType::CNAME),
-            "MX"|"mx" => Ok(RecordType::MX),
-            "NS"|"ns" => Ok(RecordType::NS),
-            "SRV"|"srv" => Ok(RecordType::SRV),
-            "TXT"|"txt" => Ok(RecordType::TXT),
+            "A" | "a" => Ok(RecordType::A),
+            "AAAA" | "aaaa" => Ok(RecordType::AAAA),
+            "CAA" | "caa" => Ok(RecordType::CAA),
+            "CNAME" | "cname" => Ok(RecordType::CNAME),
+            "MX" | "mx" => Ok(RecordType::MX),
+            "NS" | "ns" => Ok(RecordType::NS),
+            "SRV" | "srv" => Ok(RecordType::SRV),
+            "TXT" | "txt" => Ok(RecordType::TXT),
             _ => Err("invalid record type".to_string()),
         }
     }
 }
-
-
 
 /// interact with records within a zone
 #[derive(FromArgs)]
@@ -49,13 +56,10 @@ enum Action {
     Delete(Delete),
 }
 
-
-
 /// list all records
 #[derive(FromArgs)]
 #[argh(subcommand, name = "list")]
 struct List {}
-
 
 /// get information about a record
 #[derive(FromArgs)]
@@ -65,7 +69,6 @@ struct Get {
     #[argh(positional)]
     id: String,
 }
-
 
 /// create a new record
 #[derive(FromArgs)]
@@ -91,7 +94,6 @@ struct Create {
     #[argh(option, short = 'v')]
     value: String,
 }
-
 
 /// update a record
 #[derive(FromArgs)]
@@ -121,7 +123,6 @@ struct Update {
     #[argh(option, short = 'v')]
     value: String,
 }
-
 
 /// delete a record
 #[derive(FromArgs)]
